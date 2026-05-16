@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Deck Robot</title>
+    <style>
+        :root {
+            --agent: #00d4ff;
+            --agent-dim: rgba(0, 212, 255, 0.25);
+            --agent-soft: rgba(0, 212, 255, 0.12);
+        }
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at 50% 42%, var(--agent-dim), transparent 34%),
+                radial-gradient(circle at 50% 80%, var(--agent-soft), transparent 32%),
+                #050708;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding-block: 150px;
+            overflow-y: auto;
+            transition: background 420ms ease;
+            font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", sans-serif;
+        }
+        .stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+            max-height: 92vh;
+            transform: scale(var(--stage-scale, 1));
+            transform-origin: center center;
+        }
+        .robot-wrap {
+            animation: idle-float 3.8s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+        .robot-wrap.bounce {
+            animation: pop-bounce 560ms cubic-bezier(.18, .9, .25, 1.2), idle-float 3.8s ease-in-out 560ms infinite;
+        }
+        .robot-svg {
+            width: min(76vw, 580px, 66vh);
+            height: auto;
+            filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.42)) drop-shadow(0 0 24px var(--agent-dim));
+        }
+        .face { display: none; }
+        /* Robot Shell Colors */
+        .shell { fill: #eff3f0; stroke: #26312c; stroke-width: 3; }
+        .shell-shadow { fill: #cfd8d3; opacity: 0.55; }
+        .visor { fill: #101615; stroke: rgba(255, 255, 255, 0.1); stroke-width: 2; }
+        .antenna { stroke: #26312c; stroke-width: 4; stroke-linecap: round; }
+        .agent { fill: var(--agent); stroke: var(--agent); stroke-width: 2; stroke-linecap: round; }
+        .agent-text { fill: var(--agent); stroke: none; }
+        .agent-stroke { stroke: var(--agent); stroke-linecap: round; }
+        .agent-glow { filter: drop-shadow(0 0 8px var(--agent)); }
+        .agent-label {
+            min-width: 168px;
+            padding: 8px 20px 10px;
+            border: 1px solid color-mix(in srgb, var(--agent) 62%, transparent);
+            border-radius: 999px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+            box-shadow: 0 0 26px var(--agent-soft), inset 0 0 18px rgba(255, 255, 255, 0.04);
+            color: var(--agent);
+            font-size: clamp(20px, 4vw, 34px);
+            font-weight: 800;
+            letter-spacing: 0;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 0 0 22px var(--agent-dim);
+            transition: color 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+        }
+        .agent-label.bounce {
+            animation: label-bounce 560ms cubic-bezier(.18, .9, .25, 1.2);
+        }
+        @keyframes idle-float {
+            0%, 100% { transform: translateY(0) rotate(-0.4deg); }
+            50% { transform: translateY(-7px) rotate(0.4deg); }
+        }
+        @keyframes pop-bounce {
+            0% { transform: translateY(0) scale(1); }
+            34% { transform: translateY(-18px) scale(1.045, 0.96); }
+            62% { transform: translateY(4px) scale(0.98, 1.025); }
+            82% { transform: translateY(-4px) scale(1.012); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        @keyframes label-bounce {
+            0% { transform: translateY(0) scale(1); }
+            38% { transform: translateY(-8px) scale(1.04); }
+            70% { transform: translateY(2px) scale(0.99); }
+            100% { transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+<body data-source="unknown">
+    <main class="stage">
+    <div id="robot-wrap" class="robot-wrap">
+    <svg class="robot-svg" viewBox="0 0 200 160">
+        <defs>
+            <symbol id="eye-dot" viewBox="-8 -8 16 16">
+                <circle cx="0" cy="0" r="8" class="agent agent-glow" />
+            </symbol>
+            <symbol id="eye-small" viewBox="-6 -6 12 12">
+                <circle cx="0" cy="0" r="6" class="agent agent-glow" />
+            </symbol>
+            <symbol id="eye-box" viewBox="-8 -8 16 16">
+                <rect x="-7.5" y="-7.5" width="15" height="15" rx="4" class="agent agent-glow" />
+            </symbol>
+            <symbol id="eye-wink" viewBox="-10 -6 20 12">
+                <path d="M-9 1 Q0 -6 9 1" class="agent-stroke" stroke-width="5" fill="none" />
+            </symbol>
+            <symbol id="eye-heart" viewBox="-15 -13 30 26">
+                <path d="M0 12 L-12 1 C-17 -5 -9 -12 0 -4 C9 -12 17 -5 12 1 Z" class="agent agent-glow" />
+            </symbol>
+            <symbol id="eye-x" viewBox="-10 -10 20 20">
+                <path d="M-8 -8 L8 8 M8 -8 L-8 8" class="agent-stroke" stroke-width="5" />
+            </symbol>
+            <symbol id="mouth-smile" viewBox="-28 -10 56 22">
+                <path d="M-25 -2 Q0 13 25 -2" class="agent-stroke" stroke-width="5" fill="none" />
+            </symbol>
+            <symbol id="mouth-soft-smile" viewBox="-20 -8 40 16">
+                <path d="M-16 -2 Q0 7 16 -2" class="agent-stroke" stroke-width="4" fill="none" />
+            </symbol>
+            <symbol id="mouth-flat" viewBox="-22 -4 44 8">
+                <line x1="-20" y1="0" x2="20" y2="0" class="agent-stroke" stroke-width="5" />
+            </symbol>
+            <symbol id="mouth-frown" viewBox="-24 -14 48 18">
+                <path d="M-22 2 Q0 -10 22 2" class="agent-stroke" stroke-width="5" fill="none" />
+            </symbol>
+            <symbol id="mouth-open" viewBox="-10 -10 20 20">
+                <circle cx="0" cy="0" r="8" class="agent" />
+            </symbol>
+        </defs>
+        <!-- Antennae -->
+        <circle cx="60" cy="20" r="8" class="shell" />
+        <circle cx="140" cy="20" r="8" class="shell" />
+        <line x1="60" y1="28" x2="60" y2="40" class="antenna" />
+        <line x1="140" y1="28" x2="140" y2="40" class="antenna" />
+        
+        <!-- Head -->
+        <path d="M45 121 C70 140 130 140 155 121 L155 131 C133 146 67 146 45 131 Z" class="shell-shadow" />
+        <rect x="30" y="40" width="140" height="100" rx="40" class="shell" />
+        
+        <!-- Visor -->
+        <rect x="45" y="60" width="110" height="60" rx="15" class="visor" />
+        <!-- Face Group (Swappable) -->
+        <g id="happy" class="face" data-face-set="happy" style="display: block;">
+            <use href="#eye-dot" x="67" y="77" width="16" height="16" />
+            <use href="#eye-dot" x="117" y="77" width="16" height="16" />
+            <use href="#mouth-smile" x="72" y="100" width="56" height="22" />
+        </g>
+        <g id="happy-wink" class="face" data-face-set="happy">
+            <use href="#eye-wink" x="65" y="79" width="20" height="12" />
+            <use href="#eye-dot" x="117" y="77" width="16" height="16" />
+            <use href="#mouth-smile" x="72" y="100" width="56" height="22" />
+        </g>
+        <g id="happy-heart-eyes" class="face" data-face-set="happy">
+            <use href="#eye-heart" x="60" y="68" width="30" height="26" />
+            <use href="#eye-heart" x="110" y="68" width="30" height="26" />
+            <use href="#mouth-soft-smile" x="80" y="100" width="40" height="16" />
+        </g>
+        <g id="happy-laugh" class="face" data-face-set="happy">
+            <path d="M65 84 Q75 74 85 84" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M115 84 Q125 74 135 84" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M82 102 Q100 123 118 102 Z" class="agent" />
+        </g>
+        <g id="thinking" class="face" data-face-set="thinking">
+            <use href="#eye-box" x="65" y="80" width="15" height="15" />
+            <use href="#eye-box" x="120" y="80" width="15" height="15" />
+            <use href="#mouth-flat" x="78" y="106" width="44" height="8" />
+        </g>
+        <g id="thinking-question" class="face" data-face-set="thinking">
+            <circle cx="75" cy="87" r="7" class="agent agent-glow" />
+            <circle cx="125" cy="87" r="7" class="agent agent-glow" />
+            <line x1="86" y1="106" x2="114" y2="106" class="agent-stroke" stroke-width="4" />
+            <text x="100" y="49" text-anchor="middle" class="agent-text" style="font: 700 28px ui-rounded, sans-serif;">?</text>
+        </g>
+        <g id="thinking-dots" class="face" data-face-set="thinking">
+            <circle cx="75" cy="86" r="6" class="agent agent-glow" />
+            <circle cx="125" cy="86" r="6" class="agent agent-glow" />
+            <circle cx="88" cy="110" r="3" class="agent" />
+            <circle cx="100" cy="110" r="3" class="agent" />
+            <circle cx="112" cy="110" r="3" class="agent" />
+        </g>
+        <g id="thinking-chat" class="face" data-face-set="thinking">
+            <circle cx="75" cy="87" r="7" class="agent agent-glow" />
+            <circle cx="125" cy="87" r="7" class="agent agent-glow" />
+            <path d="M84 105 Q100 114 116 105" class="agent-stroke" stroke-width="4" fill="none" />
+            <path d="M116 46 H146 Q153 46 153 53 V65 Q153 72 146 72 H135 L127 79 V72 H116 Q109 72 109 65 V53 Q109 46 116 46 Z" class="agent" />
+            <circle cx="123" cy="59" r="2" class="visor" />
+            <circle cx="131" cy="59" r="2" class="visor" />
+            <circle cx="139" cy="59" r="2" class="visor" />
+        </g>
+        <g id="thinking-confused" class="face" data-face-set="thinking">
+            <use href="#eye-wink" x="65" y="78" width="20" height="12" />
+            <circle cx="126" cy="86" r="7" class="agent agent-glow" />
+            <path d="M81 110 Q88 104 95 110 Q102 116 109 110 Q116 104 123 110" class="agent-stroke" stroke-width="4" fill="none" />
+            <text x="100" y="51" text-anchor="middle" class="agent-text" style="font: 700 25px ui-rounded, sans-serif;">?</text>
+        </g>
+        <g id="needs-info-battery" class="face" data-face-set="needs-info">
+            <rect x="68" y="78" width="54" height="31" rx="4" class="agent-stroke" stroke-width="4" fill="none" />
+            <rect x="124" y="87" width="7" height="13" rx="2" class="agent-stroke" stroke-width="4" fill="none" />
+            <rect x="73" y="83" width="11" height="21" rx="2" class="agent" opacity="0.95" />
+            <line x1="91" y1="94" x2="113" y2="94" class="agent-stroke" stroke-width="4" opacity="0.45" />
+        </g>
+        <g id="needs-info-meter" class="face" data-face-set="needs-info">
+            <circle cx="75" cy="86" r="7" class="agent agent-glow" />
+            <circle cx="125" cy="86" r="7" class="agent agent-glow" />
+            <path d="M83 109 H94 L99 101 L106 116 L112 109 H123" class="agent-stroke" stroke-width="4" fill="none" />
+        </g>
+        <g id="needs-info-question" class="face" data-face-set="needs-info">
+            <circle cx="75" cy="87" r="7" class="agent agent-glow" />
+            <circle cx="125" cy="87" r="7" class="agent agent-glow" />
+            <line x1="88" y1="108" x2="112" y2="108" class="agent-stroke" stroke-width="4" />
+            <text x="100" y="50" text-anchor="middle" class="agent-text" style="font: 700 29px ui-rounded, sans-serif;">?</text>
+        </g>
+        <g id="needs-info-confused" class="face" data-face-set="needs-info">
+            <circle cx="76" cy="86" r="7" class="agent agent-glow" />
+            <use href="#eye-wink" x="116" y="80" width="20" height="12" />
+            <path d="M82 110 Q89 105 96 110 Q103 115 110 110 Q116 106 122 111" class="agent-stroke" stroke-width="4" fill="none" />
+            <path d="M91 63 Q100 55 109 63" class="agent-stroke" stroke-width="3" fill="none" opacity="0.8" />
+            <text x="100" y="52" text-anchor="middle" class="agent-text" style="font: 700 18px ui-rounded, sans-serif;">?</text>
+        </g>
+        <g id="needs-info-empty" class="face" data-face-set="needs-info">
+            <circle cx="74" cy="85" r="8" class="agent agent-glow" opacity="0.62" />
+            <circle cx="126" cy="85" r="8" class="agent agent-glow" opacity="0.62" />
+            <path d="M80 111 Q100 101 120 111" class="agent-stroke" stroke-width="4" fill="none" />
+            <rect x="91" y="68" width="18" height="5" rx="2.5" class="agent" opacity="0.75" />
+            <rect x="87" y="57" width="26" height="5" rx="2.5" class="agent" opacity="0.48" />
+        </g>
+        <g id="needs-info-context-42" class="face" data-face-set="needs-info">
+            <circle cx="100" cy="90" r="30" class="agent-stroke" stroke-width="4" fill="none" opacity="0.22" />
+            <path d="M100 60 A30 30 0 1 1 83 115" class="agent-stroke agent-glow" stroke-width="5" fill="none" />
+            <path d="M70 90 H82" class="agent-stroke" stroke-width="3" opacity="0.85" />
+            <path d="M76 66 H85" class="agent-stroke" stroke-width="2" opacity="0.38" />
+            <text x="100" y="86" text-anchor="middle" class="agent-text" style="font: 600 8px ui-rounded, 'SF Pro Rounded', sans-serif;">context</text>
+            <text x="100" y="102" text-anchor="middle" class="agent-text" style="font: 700 16px ui-rounded, 'SF Pro Rounded', sans-serif;">42%</text>
+        </g>
+        <g id="loading" class="face" data-face-set="loading">
+            <circle cx="100" cy="90" r="15" class="agent-stroke" stroke-width="4" fill="none" stroke-dasharray="25 10">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 90" to="360 100 90" dur="2s" repeatCount="indefinite"/>
+            </circle>
+        </g>
+        <g id="loading-pulse" class="face" data-face-set="loading">
+            <circle cx="75" cy="90" r="5" class="agent agent-glow">
+                <animate attributeName="opacity" values="0.35;1;0.35" dur="900ms" repeatCount="indefinite" />
+            </circle>
+            <circle cx="100" cy="90" r="5" class="agent agent-glow">
+                <animate attributeName="opacity" values="0.35;1;0.35" dur="900ms" begin="150ms" repeatCount="indefinite" />
+            </circle>
+            <circle cx="125" cy="90" r="5" class="agent agent-glow">
+                <animate attributeName="opacity" values="0.35;1;0.35" dur="900ms" begin="300ms" repeatCount="indefinite" />
+            </circle>
+            <path d="M84 110 Q100 116 116 110" class="agent-stroke" stroke-width="4" fill="none" opacity="0.8" />
+        </g>
+        <g id="loading-scan" class="face" data-face-set="loading">
+            <rect x="65" y="78" width="70" height="24" rx="12" class="agent-stroke" stroke-width="4" fill="none" opacity="0.92" />
+            <line x1="74" y1="90" x2="91" y2="90" class="agent-stroke" stroke-width="5">
+                <animate attributeName="x1" values="72;109;72" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="x2" values="89;126;89" dur="1.4s" repeatCount="indefinite" />
+            </line>
+            <path d="M82 112 L118 112" class="agent-stroke" stroke-width="4" />
+        </g>
+        <g id="attention" class="face" data-face-set="attention">
+            <use href="#eye-small" x="69" y="77" width="12" height="12" />
+            <use href="#eye-small" x="119" y="77" width="12" height="12" />
+            <use href="#mouth-open" x="90" y="96" width="20" height="20" />
+        </g>
+        <g id="attention-surprise" class="face" data-face-set="attention">
+            <circle cx="74" cy="85" r="8" class="agent agent-glow" />
+            <circle cx="126" cy="85" r="8" class="agent agent-glow" />
+            <circle cx="100" cy="107" r="5" class="agent" />
+            <text x="100" y="51" text-anchor="middle" class="agent-text" style="font: 700 30px ui-rounded, sans-serif;">!</text>
+        </g>
+        <g id="attention-ping" class="face" data-face-set="attention">
+            <circle cx="74" cy="84" r="7" class="agent" />
+            <circle cx="126" cy="84" r="7" class="agent" />
+            <path d="M92 106 Q100 101 108 106" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M100 70 L100 78" class="agent-stroke" stroke-width="4" />
+            <path d="M87 72 L82 66" class="agent-stroke" stroke-width="3" />
+            <path d="M113 72 L118 66" class="agent-stroke" stroke-width="3" />
+        </g>
+        <g id="attention-focused" class="face" data-face-set="attention">
+            <path d="M64 91 Q74 78 88 81" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M112 81 Q126 78 136 91" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M86 111 Q100 101 114 111" class="agent-stroke" stroke-width="5" fill="none" />
+        </g>
+        <g id="blocked" class="face" data-face-set="blocked">
+            <use href="#eye-x" x="66" y="78" width="20" height="20" />
+            <use href="#eye-x" x="114" y="78" width="20" height="20" />
+            <use href="#mouth-flat" x="78" y="106" width="44" height="8" />
+        </g>
+        <g id="blocked-sad" class="face" data-face-set="blocked">
+            <path d="M67 84 Q75 78 83 84" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M117 84 Q125 78 133 84" class="agent-stroke" stroke-width="5" fill="none" />
+            <path d="M78 113 Q100 101 122 113" class="agent-stroke" stroke-width="5" fill="none" />
+        </g>
+        <g id="blocked-flatline" class="face" data-face-set="blocked">
+            <rect x="66" y="80" width="17" height="10" rx="3" class="agent" />
+            <rect x="117" y="80" width="17" height="10" rx="3" class="agent" />
+            <line x1="88" y1="108" x2="112" y2="108" class="agent-stroke" stroke-width="5" />
+        </g>
+        <g id="blocked-wince" class="face" data-face-set="blocked">
+            <path d="M66 84 L84 94" class="agent-stroke" stroke-width="5" />
+            <path d="M84 84 L66 94" class="agent-stroke" stroke-width="5" />
+            <path d="M116 84 L134 94" class="agent-stroke" stroke-width="5" />
+            <path d="M134 84 L116 94" class="agent-stroke" stroke-width="5" />
+            <path d="M80 111 Q86 106 92 111 Q98 116 104 111 Q110 106 116 111 Q120 114 124 111" class="agent-stroke" stroke-width="4" fill="none" />
+        </g>
+        <g id="blocked-sleepy" class="face" data-face-set="blocked">
+            <path d="M66 85 Q75 93 84 85" class="agent-stroke" stroke-width="4" fill="none" />
+            <path d="M116 85 Q125 93 134 85" class="agent-stroke" stroke-width="4" fill="none" />
+            <line x1="88" y1="110" x2="112" y2="110" class="agent-stroke" stroke-width="4" />
+            <text x="112" y="52" class="agent-text" style="font: 700 15px ui-rounded, sans-serif;">Z</text>
+            <text x="126" y="45" class="agent-text" style="font: 700 17px ui-rounded, sans-serif;">Z</text>
+            <text x="143" y="38" class="agent-text" style="font: 700 19px ui-rounded, sans-serif;">Z</text>
+        </g>
+    </svg>
+    </div>
+    <div id="agent-label" class="agent-label">Agent Deck</div>
+    </main>
+
+    <script>
+        let currentState = '';
+        let currentFace = 'happy';
+        let currentSource = 'unknown';
+        let currentUpdatedAt = 0;
+        const beshColor = ['#48f2a9', 'rgba(72, 242, 169, 0.28)', 'rgba(72, 242, 169, 0.12)'];
+        const colors = {
+            codex: beshColor,
+            gemini: beshColor,
+            claude: beshColor,
+            ollama: beshColor,
+            local: beshColor,
+            unknown: beshColor
+        };
+        const labels = {
+            codex: 'BESH',
+            gemini: 'BESH',
+            claude: 'BESH',
+            ollama: 'BESH',
+            local: 'BESH',
+            unknown: 'BESH'
+        };
+        const robotWrap = document.getElementById('robot-wrap');
+        const agentLabel = document.getElementById('agent-label');
+
+        function bounce() {
+            robotWrap.classList.remove('bounce');
+            agentLabel.classList.remove('bounce');
+            void robotWrap.offsetWidth;
+            robotWrap.classList.add('bounce');
+            agentLabel.classList.add('bounce');
+        }
+
+        function applySource(source) {
+            const cleanSource = colors[source] ? source : 'unknown';
+            if (cleanSource === currentSource) return;
+
+            currentSource = cleanSource;
+            const [agent, dim, soft] = colors[cleanSource];
+            document.documentElement.style.setProperty('--agent', agent);
+            document.documentElement.style.setProperty('--agent-dim', dim);
+            document.documentElement.style.setProperty('--agent-soft', soft);
+            document.body.dataset.source = cleanSource;
+            agentLabel.textContent = labels[cleanSource];
+            bounce();
+        }
+
+        const faceSets = Array.from(document.querySelectorAll('.face')).reduce((sets, face) => {
+            const state = face.dataset.faceSet || face.id;
+            sets[state] = sets[state] || [];
+            sets[state].push(face.id);
+            return sets;
+        }, {});
+        faceSets.need_info = faceSets['needs-info'];
+        faceSets.needs_info = faceSets['needs-info'];
+        faceSets.context = faceSets['needs-info'];
+        const previewStates = Object.keys(faceSets).filter(state => !['need_info', 'needs_info', 'context'].includes(state));
+
+        function chooseFace(state) {
+            const options = faceSets[state] || faceSets.happy;
+            const nextFace = options[Math.floor(Math.random() * options.length)];
+
+            if (options.length < 2 || nextFace !== currentFace) return nextFace;
+            return options[(options.indexOf(nextFace) + 1) % options.length];
+        }
+
+        function applyState(state, updatedAt = 0) {
+            const cleanState = faceSets[state] ? state : 'happy';
+            const isFreshHookCall = updatedAt && updatedAt !== currentUpdatedAt;
+            if (cleanState === currentState && !isFreshHookCall) return;
+
+            currentState = cleanState;
+            currentUpdatedAt = updatedAt || currentUpdatedAt;
+            currentFace = chooseFace(currentState);
+            document.querySelectorAll('.face').forEach(f => f.style.display = 'none');
+            document.getElementById(currentFace).style.display = 'block';
+            bounce();
+        }
+
+        async function updateFace() {
+            try {
+                const res = await fetch('state.json?t=' + Date.now());
+                const payload = await res.json();
+                applySource(payload.source);
+                applyState(payload.state, payload.updated_at);
+            } catch(e) {
+                applySource('unknown');
+                const previewState = previewStates[Math.floor(Math.random() * previewStates.length)] || 'happy';
+                applyState(previewState, Date.now());
+            }
+        }
+        updateFace();
+        setInterval(updateFace, 500);
+    </script>
+</body>
+</html>
