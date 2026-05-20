@@ -330,22 +330,21 @@
         let currentFace = 'happy';
         let currentSource = 'unknown';
         let currentUpdatedAt = 0;
-        const agentColor = ['#48f2a9', 'rgba(72, 242, 169, 0.28)', 'rgba(72, 242, 169, 0.12)'];
         const colors = {
-            codex: agentColor,
-            gemini: agentColor,
-            claude: agentColor,
-            ollama: agentColor,
-            local: agentColor,
-            unknown: agentColor
+            codex: ['#48f2a9', 'rgba(72, 242, 169, 0.28)', 'rgba(72, 242, 169, 0.12)'],
+            gemini: ['#65adff', 'rgba(101, 173, 255, 0.28)', 'rgba(101, 173, 255, 0.12)'],
+            claude: ['#ffbd59', 'rgba(255, 189, 89, 0.28)', 'rgba(255, 189, 89, 0.12)'],
+            ollama: ['#00d4ff', 'rgba(0, 212, 255, 0.25)', 'rgba(0, 212, 255, 0.1)'],
+            local: ['#00d4ff', 'rgba(0, 212, 255, 0.25)', 'rgba(0, 212, 255, 0.1)'],
+            unknown: ['#00d4ff', 'rgba(0, 212, 255, 0.25)', 'rgba(0, 212, 255, 0.1)']
         };
         const labels = {
-            codex: 'AGENT',
-            gemini: 'AGENT',
-            claude: 'AGENT',
-            ollama: 'AGENT',
-            local: 'AGENT',
-            unknown: 'AGENT'
+            codex: 'CODEX',
+            gemini: 'GEMINI',
+            claude: 'CLAUDE',
+            ollama: 'OLLAMA',
+            local: 'LOCAL',
+            unknown: 'UNKNOWN'
         };
         const robotWrap = document.getElementById('robot-wrap');
         const agentLabel = document.getElementById('agent-label');
